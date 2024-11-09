@@ -11,83 +11,81 @@ Have an assembly document open and run the following sample. Then check the "iLo
 Public Sub Main()
     ' Set a reference to the assembly document.
     ' This assumes an assembly document is active.
-    Dim oDoc As AssemblyDocument = ThisDoc.Document
+    Dim doc As AssemblyDocument = ThisDoc.Document
 
-    Dim FirstLevelOnly As Boolean
+    Dim firstLevelOnly As Boolean
     If MsgBox("First level only?", vbYesNo) = vbYes Then
-        FirstLevelOnly = True
+        firstLevelOnly = True
     Else
-        FirstLevelOnly = False
+        firstLevelOnly = False
     End If
 
     ' Set a reference to the BOM
-    Dim oBOM As BOM = oDoc.ComponentDefinition.BOM
+    Dim bom As BOM = doc.ComponentDefinition.BOM
 
     ' Set whether first level only or all levels.
-    If FirstLevelOnly Then
-        oBOM.StructuredViewFirstLevelOnly = True
+    If firstLevelOnly Then
+        bom.StructuredViewFirstLevelOnly = True
     Else
-        oBOM.StructuredViewFirstLevelOnly = False
+        bom.StructuredViewFirstLevelOnly = False
     End If
 
     ' Make sure that the structured view is enabled.
-    oBOM.StructuredViewEnabled = True
+    bom.StructuredViewEnabled = True
 
     'Set a reference to the "Structured" BOMView
-    Dim oBOMView As BOMView = oBOM.BOMViews.Item("Structured")
+    Dim bomView As BOMView = bom.BOMViews.Item("Structured")
 
-    Logger.Info("Item / Quantity / Part Number / Description")
-    Logger.Info("----------------------------------------------------------------------------------")
+    logger.Info("Item / Quantity / Part Number / Description")
+    logger.Info("----------------------------------------------------------------------------------")
 
     'Initialize the tab for ItemNumber
-    Dim ItemTab As Long
-    ItemTab = -3
-    QueryBOMRowProperties(oBOMView.BOMRows, ItemTab)
+    Dim itemTab As Long
+    itemTab = -3
+    QueryBOMRowProperties(bomView.BOMRows, itemTab)
 End Sub
 
-Private Sub QueryBOMRowProperties(oBOMRows As BOMRowsEnumerator, ItemTab As Long)
-    ItemTab = ItemTab + 3
+Private Sub QueryBOMRowProperties(bomRows As BOMRowsEnumerator, itemTab As Long)
+    itemTab = itemTab + 3
     ' Iterate through the contents of the BOM Rows.
     Dim i As Long
-    For i = 1 To oBOMRows.Count
+    For i = 1 To bomRows.Count
         ' Get the current row.
-        Dim oRow As BOMRow = oBOMRows.Item(i)
+        Dim row As BOMRow = bomRows.Item(i)
 
         'Set a reference to the primary ComponentDefinition of the row
-        Dim oCompDef As ComponentDefinition = oRow.ComponentDefinitions.Item(1)
+        Dim compDef As ComponentDefinition = row.ComponentDefinitions.Item(1)
 
-        Dim oPartNumProperty As [Property]
-        Dim oDescripProperty As [Property]
+        Dim partNumProperty As [Property]
+        Dim descripProperty As [Property]
 
-        If TypeOf oCompDef Is VirtualComponentDefinition Then
+        If TypeOf compDef Is VirtualComponentDefinition Then
             'Get the file property that contains the "Part Number"
             'The file property is obtained from the virtual component definition
-            oPartNumProperty = oCompDef.PropertySets.Item("Design Tracking Properties").Item("Part Number")
+            partNumProperty = compDef.PropertySets.Item("Design Tracking Properties").Item("Part Number")
 
             'Get the file property that contains the "Description"
-            oDescripProperty = oCompDef.PropertySets.Item("Design Tracking Properties").Item("Description")
+            descripProperty = compDef.PropertySets.Item("Design Tracking Properties").Item("Description")
 
-            Logger.Info(TAB(ItemTab) & oRow.ItemNumber & "/ " & oRow.ItemQuantity & "/ " & oPartNumProperty.Value & "/ " & oDescripProperty.Value)
+            logger.Info(TAB(itemTab) & row.ItemNumber & "/ " & row.ItemQuantity & "/ " & partNumProperty.Value & "/ " & descripProperty.Value)
         Else
             'Get the file property that contains the "Part Number"
             'The file property is obtained from the parent
             'document of the associated ComponentDefinition.
-            oPartNumProperty = oCompDef.Document.PropertySets _
-            .Item("Design Tracking Properties").Item("Part Number")
+            partNumProperty = compDef.Document.PropertySets.Item("Design Tracking Properties").Item("Part Number")
 
             'Get the file property that contains the "Description"
-            oDescripProperty = oCompDef.Document.PropertySets _
-            .Item("Design Tracking Properties").Item("Description")
+            descripProperty = compDef.Document.PropertySets.Item("Design Tracking Properties").Item("Description")
 
-            Logger.Info(TAB(ItemTab) & oRow.ItemNumber & "/ " & oRow.ItemQuantity & "/ " & oPartNumProperty.Value & "/ " & oDescripProperty.Value)
+            logger.Info(TAB(itemTab) & row.ItemNumber & "/ " & row.ItemQuantity & "/ " & partNumProperty.Value & "/ " & descripProperty.Value)
 
             'Recursively iterate child rows if present.
-            If Not oRow.ChildRows Is Nothing Then
-                Call QueryBOMRowProperties(oRow.ChildRows, ItemTab)
+            If Not row.ChildRows Is Nothing Then
+                QueryBOMRowProperties(row.ChildRows, itemTab)
             End If
         End If
     Next
-    ItemTab = ItemTab - 3
+    itemTab = itemTab - 3
 End Sub
 
 Private Function TAB(length As Integer) As String
